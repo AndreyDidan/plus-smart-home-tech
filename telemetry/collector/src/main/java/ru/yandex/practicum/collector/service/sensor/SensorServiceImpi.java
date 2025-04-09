@@ -2,16 +2,12 @@ package ru.yandex.practicum.collector.service.sensor;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.collector.kafka.KafkaClient;
 import ru.yandex.practicum.collector.model.sensor.*;
-import ru.yandex.practicum.collector.service.hub.HubService;
 import ru.yandex.practicum.kafka.telemetry.event.*;
-
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
