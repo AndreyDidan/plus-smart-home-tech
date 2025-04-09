@@ -17,10 +17,8 @@ public class ScenarioAddedEvent extends HubEvent {
     @Size(min = 3, max = 2147483647)
     private String name;
 
-    @NotBlank
     private List<ScenarioCondition> conditions;
 
-    @NotBlank
     private List<DeviceAction> actions;
 
     @Override

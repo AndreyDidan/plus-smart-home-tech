@@ -13,7 +13,6 @@ public class DeviceAction {
     @NotBlank
     private String sensorId;
 
-    @NotBlank
     private DeviceActionType type;
 
     private int value;
