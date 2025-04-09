@@ -1,7 +1,6 @@
 package ru.yandex.practicum.collector.service.hub;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +22,11 @@ public class HubServiceImpi implements HubService {
 
     @Override
     public void sendHubEvent(HubEvent hubEvent) {
+        HubEventAvro hubEventAvro = mapToAvro(hubEvent);
+        kafkaClient.getProducer().send(new ProducerRecord<>(topicHubs,hubEventAvro));
+    }
+
+    public HubEventAvro mapToAvro(HubEvent hubEvent) {
         Object payload;
         switch (hubEvent) {
             case DeviceAddedEvent deviceAddedEvent -> payload = DeviceAddedEventAvro.newBuilder()
@@ -49,13 +53,11 @@ public class HubServiceImpi implements HubService {
             }
             case null, default -> throw new IllegalStateException("Unexpected value: " + hubEvent.getType());
         }
-        HubEventAvro hubEventAvro = new HubEventAvro(hubEvent.getHubId(), hubEvent.getTimestamp(), payload);
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                topicHubs,
-                hubEvent.getHubId(),
-                hubEventAvro
-        );
-        kafkaClient.getProducer().send(producerRecord);
+        return HubEventAvro.newBuilder()
+                .setHubId(hubEvent.getHubId())
+                .setTimestamp(hubEvent.getTimestamp())
+                .setPayload(payload)
+                .build();
     }
 
     private DeviceActionAvro map(DeviceAction action) {

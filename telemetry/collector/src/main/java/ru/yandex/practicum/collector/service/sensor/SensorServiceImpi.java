@@ -20,6 +20,11 @@ public class SensorServiceImpi implements SensorService {
 
     @Override
     public void sendSensorService(SensorEvent sensorEvent) {
+        SensorEventAvro sensorEventAvro = mapToAvro(sensorEvent);
+        kafkaClient.getProducer().send(new ProducerRecord<>(topicSensors, sensorEventAvro));
+    }
+
+    private SensorEventAvro mapToAvro(SensorEvent sensorEvent) {
         Object payload;
         switch (sensorEvent) {
             case ClimateSensorEvent climateSensorEvent -> payload = ClimateSensorAvro.newBuilder()
@@ -45,17 +50,11 @@ public class SensorServiceImpi implements SensorService {
 
             case null, default -> throw new IllegalStateException("Unexpected value: " + sensorEvent.getType());
         }
-        SensorEventAvro sensorEventAvro = new SensorEventAvro(
-                sensorEvent.getId(),
-                sensorEvent.getHubId(),
-                sensorEvent.getTimestamp(),
-                payload
-        );
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                topicSensors,
-                sensorEvent.getHubId(),
-                sensorEventAvro
-        );
-        kafkaClient.getProducer().send(producerRecord);
+        return SensorEventAvro.newBuilder()
+                .setHubId(sensorEvent.getHubId())
+                .setId(sensorEvent.getId())
+                .setTimestamp(sensorEvent.getTimestamp())
+                .setPayload(payload)
+                .build();
     }
 }
