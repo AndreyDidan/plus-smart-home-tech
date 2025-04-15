@@ -5,7 +5,7 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.collector.kafka.KafkaClient;
+import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
 import ru.yandex.practicum.collector.model.hub.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HubServiceImpi implements HubService {
 
-    private final KafkaClient kafkaClient;
+    private final KafkaProducerService kafkaProducerService;
 
     @Value(value = "${hubs}")
     private String topicHubs;
@@ -26,29 +26,13 @@ public class HubServiceImpi implements HubService {
         HubEventAvro hubEventAvro = mapToAvro(hubEvent);
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                 topicHubs,
-                null, // partition (можно null — Kafka определит по ключу)
-                hubEvent.getTimestamp().toEpochMilli(), // timestamp
-                hubEvent.getHubId(), // key
-                hubEventAvro // value
+                null,
+                hubEvent.getTimestamp().toEpochMilli(),
+                hubEvent.getHubId(),
+                hubEventAvro
         );
 
-        try {
-            kafkaClient.getProducer().send(record, (metadata, exception) -> {
-                if (exception != null) {
-                    // логируем ошибку
-                    System.err.println("Ошибка при отправке сообщения в Kafka: " + exception.getMessage());
-                    exception.printStackTrace();
-                } else {
-                    // логируем успех, если нужно
-                    System.out.println("Сообщение отправлено в Kafka, offset: " + metadata.offset());
-                }
-            });
-            kafkaClient.getProducer().flush(); // гарантируем доставку
-        } catch (Exception e) {
-            // логируем возможные ошибки
-            System.err.println("Исключение при отправке события: " + e.getMessage());
-            e.printStackTrace();
-        }
+        kafkaProducerService.sendEvent(record, hubEvent.getClass());
     }
 
     public HubEventAvro mapToAvro(HubEvent hubEvent) {
