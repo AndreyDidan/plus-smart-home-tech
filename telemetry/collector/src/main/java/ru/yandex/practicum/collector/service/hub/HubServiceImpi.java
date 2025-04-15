@@ -1,6 +1,7 @@
 package ru.yandex.practicum.collector.service.hub;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,31 @@ public class HubServiceImpi implements HubService {
     @Override
     public void sendHubEvent(HubEvent hubEvent) {
         HubEventAvro hubEventAvro = mapToAvro(hubEvent);
-        kafkaClient.getProducer().send(new ProducerRecord<>(topicHubs,hubEventAvro));
+        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                topicHubs,
+                null, // partition (можно null — Kafka определит по ключу)
+                hubEvent.getTimestamp().toEpochMilli(), // timestamp
+                hubEvent.getHubId(), // key
+                hubEventAvro // value
+        );
+
+        try {
+            kafkaClient.getProducer().send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    // логируем ошибку
+                    System.err.println("Ошибка при отправке сообщения в Kafka: " + exception.getMessage());
+                    exception.printStackTrace();
+                } else {
+                    // логируем успех, если нужно
+                    System.out.println("Сообщение отправлено в Kafka, offset: " + metadata.offset());
+                }
+            });
+            kafkaClient.getProducer().flush(); // гарантируем доставку
+        } catch (Exception e) {
+            // логируем возможные ошибки
+            System.err.println("Исключение при отправке события: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public HubEventAvro mapToAvro(HubEvent hubEvent) {
