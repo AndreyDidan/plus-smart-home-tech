@@ -3,7 +3,6 @@ package ru.yandex.practicum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.KafkaClient;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -30,6 +29,7 @@ public class AggregationStarter {
     private static final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
     private static final List<String> TOPICS = List.of("telemetry.sensors.v1");
     private static  final String SNAPSHOT_TOPIC = "telemetry.snapshots.v1";
+    private static final Duration CONSUME_ATTEMPT_TIMEOUT = Duration.ofMillis(1000);
 
     private final СhangeStates changeStates;
 
@@ -43,7 +43,6 @@ public class AggregationStarter {
      */
     public void start() {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
             consumer.subscribe(TOPICS);
 
             // ... подготовка к обработке данных ...
@@ -53,12 +52,11 @@ public class AggregationStarter {
             while (true) {
                 // ... реализация цикла опроса ...
                 // ... и обработка полученных данных ...
-                ConsumerRecords<String, SensorEventAvro> consumerRecords = consumer.poll(Duration.ofMillis(100));
+                ConsumerRecords<String, SensorEventAvro> consumerRecords = consumer.poll(CONSUME_ATTEMPT_TIMEOUT);
 
                 int count = 0;
                 for (ConsumerRecord<String, SensorEventAvro> consumerRecord : consumerRecords) {
                     Optional<SensorsSnapshotAvro> sensorsSnapshotAvroOpt= changeStates.updateState(consumerRecord.value());
-
                     if (sensorsSnapshotAvroOpt.isPresent()) {
                         SensorsSnapshotAvro snapshotAvro = sensorsSnapshotAvroOpt.get();
                         ProducerRecord<String, SpecificRecordBase> producerRecord =
