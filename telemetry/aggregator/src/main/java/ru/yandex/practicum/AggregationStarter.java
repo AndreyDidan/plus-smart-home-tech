@@ -9,8 +9,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.serialization.VoidDeserializer;
-import org.apache.kafka.common.serialization.VoidSerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
@@ -105,7 +105,7 @@ public class AggregationStarter {
         properties.put(ConsumerConfig.CLIENT_ID_CONFIG, "SomeConsumer");
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, "some.group.id");
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, VoidDeserializer.class);
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorEventDeserializer.class);
         return properties;
     }
@@ -113,7 +113,7 @@ public class AggregationStarter {
     private static Properties getProducerProperties() {
         Properties properties = new Properties();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, VoidSerializer.class);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class);
         return properties;
     }

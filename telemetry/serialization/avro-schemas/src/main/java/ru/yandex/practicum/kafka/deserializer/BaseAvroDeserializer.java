@@ -9,7 +9,6 @@ import org.apache.kafka.common.serialization.Deserializer;
 
 public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deserializer<T> {
     private final DecoderFactory decoderFactory;
-    private final Schema schema;
     private final SpecificDatumReader<T> reader;
 
     public BaseAvroDeserializer(Schema schema) {
@@ -18,7 +17,6 @@ public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deser
 
     public BaseAvroDeserializer(DecoderFactory decoderFactory, Schema schema) {
         this.decoderFactory = decoderFactory;
-        this.schema = schema;
         this.reader = new SpecificDatumReader<>(schema);
     }
 
@@ -26,7 +24,7 @@ public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deser
     public T deserialize(String topic, byte[] data) {
 
         try {
-            if (data != null && data.length != 0) {
+            if (data != null) {
                 BinaryDecoder decoder = decoderFactory.binaryDecoder(data, null);
                 return this.reader.read(null, decoder);
             }
