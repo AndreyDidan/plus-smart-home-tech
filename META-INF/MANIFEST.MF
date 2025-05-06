@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Created-By: Apache Maven 3.9.6
+Built-By: V
+Build-Jdk: 21.0.2
+Implementation-Title: aggregator
+Implementation-Version: 1.0-SNAPSHOT
+Implementation-Vendor-Id: ru.yandex.practicum
+Implementation-URL: https://spring.io/projects/spring-boot/smart-home-te
+ ch/telemetry/aggregator
+Main-Class: com.example.MainClass
+
