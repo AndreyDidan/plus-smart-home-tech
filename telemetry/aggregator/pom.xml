@@ -43,7 +43,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Main-Class>com.example.MainClass</Main-Class>
+                            <Main-Class>com.example.MainClass</Main-Class> <!-- Укажи здесь свой основной класс -->
                         </manifestEntries>
                     </archive>
                 </configuration>
