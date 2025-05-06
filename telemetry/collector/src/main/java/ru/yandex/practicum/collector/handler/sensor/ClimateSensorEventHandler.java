@@ -30,6 +30,8 @@ public class ClimateSensorEventHandler implements SensorEventHandler {
     @Override
     public void handle(SensorEventProto eventProto) {
         SensorEventAvro eventAvro = map(eventProto);
+        log.info("Готовимся отправить событие в Kafka: ID = {}, HubID = {}, Payload: {}",
+                eventAvro.getId(), eventAvro.getHubId(), eventAvro.getPayload());
         ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(topic, null,
                 eventAvro.getTimestamp().getEpochSecond(), null, eventAvro);
         kafkaClient.getProducer().send(producerRecord);
