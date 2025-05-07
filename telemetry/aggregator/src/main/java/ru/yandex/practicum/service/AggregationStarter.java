@@ -1,4 +1,4 @@
-package ru.yandex.practicum;
+package ru.yandex.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +20,6 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class AggregationStarter {
-    // ... объявление полей и конструктора ...
-
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SensorsSnapshotAvro> producer;
     private final SnapshotAggregator aggregator;
@@ -35,14 +33,7 @@ public class AggregationStarter {
     public void start() {
         consumer.subscribe(List.of("telemetry.sensors.v1"));
         try {
-
-            // ... подготовка к обработке данных ...
-            // ... например, подписка на топик ...
-
-            // Цикл обработки событий
             while (true) {
-                // ... реализация цикла опроса ...
-                // ... и обработка полученных данных ...
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(500));
 
                 if (records.isEmpty()) {
@@ -73,12 +64,6 @@ public class AggregationStarter {
         } finally {
 
             try {
-                // Перед тем, как закрыть продюсер и консьюмер, нужно убедится,
-                // что все сообщения, лежащие в буффере, отправлены и
-                // все оффсеты обработанных сообщений зафиксированы
-
-                // здесь нужно вызвать метод продюсера для сброса данных в буффере
-                // здесь нужно вызвать метод консьюмера для фиксиции смещений
                 producer.flush();
                 consumer.commitSync();
 
@@ -91,3 +76,4 @@ public class AggregationStarter {
         }
     }
 }
+
