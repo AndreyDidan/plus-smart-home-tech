@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: analyzer
+  kafka:
+    topic:
+      hubs: telemetry.hubs.v1
+      snapshots: telemetry.snapshots.v1
+    consumer:
+      'snapshot:properties':
+        bootstrap.servers: 'localhost:9092'
+        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value.deserializer: ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer
+        group.id: analyzer-snapshot-group
+      'hub:properties':
+        bootstrap.servers: 'localhost:9092'
+        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value.deserializer: ru.yandex.practicum.kafka.deserializer.HubEventDeserializer
+        group.id: analyzer-hub-group
+  sql:
+    init:
+      mode: always
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: 'jdbc:postgresql://localhost:5432/analyzer'
+    username: user
+    password: 12345
+logging:
+  level:
+    ru.yandex.practicum: TRACE
+    org.apache.kafka: ERROR
+
+grpc:
+  client:
+    hub-router:
+      address: 'static://localhost:59090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
