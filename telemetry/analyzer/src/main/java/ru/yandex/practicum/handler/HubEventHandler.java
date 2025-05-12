@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@Transactional
 @RequiredArgsConstructor
 public class HubEventHandler {
     private final SensorRepository sensorRepository;
@@ -27,6 +26,7 @@ public class HubEventHandler {
     private final ConditionRepository conditionRepository;
     private final ActionRepository actionRepository;
 
+    @Transactional
     public void handle(HubEventAvro event) {
         Object payload = event.getPayload();
         String hubId = event.getHubId();

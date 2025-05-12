@@ -9,13 +9,15 @@ spring:
       'snapshot:properties':
         bootstrap.servers: 'localhost:9092'
         key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value.deserializer: ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer
-        group.id: analyzer-snapshot-group
+        value.deserializer: ru.yandex.practicum.kafka.deserializer.SensorSnapshotDeserializer
+        group.id: snapshot.analyzing
+        consume-timeout: 1000
       'hub:properties':
         bootstrap.servers: 'localhost:9092'
         key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
         value.deserializer: ru.yandex.practicum.kafka.deserializer.HubEventDeserializer
-        group.id: analyzer-hub-group
+        group.id: hub.analyzing
+        consume-timeout: 1000
   sql:
     init:
       mode: always
