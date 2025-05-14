@@ -7,7 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.collector.handler.TimestampMapper;
-import ru.yandex.practicum.collector.kafka.KafkaClient;
+import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.ScenarioRemovedEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
@@ -18,10 +18,9 @@ import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
 @RequiredArgsConstructor
 public class ScenarioRemovedEventHandler implements HubEventHandler {
 
-    @Value(value = "${hubs}")
+    @Value("${hubs}")
     private String topic;
-    private final KafkaClient kafkaClient;
-
+    private final KafkaProducerService producerService;
 
     @Override
     public HubEventProto.PayloadCase getMessageType() {
@@ -31,9 +30,10 @@ public class ScenarioRemovedEventHandler implements HubEventHandler {
     @Override
     public void handle(HubEventProto eventProto) {
         HubEventAvro eventAvro = map(eventProto);
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(topic, null,
-                eventAvro.getTimestamp().getEpochSecond(), null, eventAvro);
-        kafkaClient.getProducer().send(producerRecord);
+        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
+        );
+        producerService.sendEvent(record, ScenarioRemovedEventAvro.class);
         log.info("Событие из hub ID = {} отправлено в топик: {}", eventAvro.getHubId(), topic);
     }
 
