@@ -9,7 +9,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.configuration.KafkaTopicsProperties;
+import ru.yandex.practicum.configuration.KafkaProperties;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
@@ -24,13 +24,10 @@ public class AggregationStarter {
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SensorsSnapshotAvro> producer;
     private final SnapshotAggregator aggregator;
-    private final KafkaTopicsProperties kafkaTopicsProperties;
+    private final KafkaProperties kafkaProperties;
 
     public void start() {
-        String sensorTopic = kafkaTopicsProperties.getTopics().getSensors();
-        String snapshotTopic = kafkaTopicsProperties.getTopics().getSnapshots();
-
-        consumer.subscribe(List.of(sensorTopic));
+        consumer.subscribe(List.of(kafkaProperties.getTopics().getSensors()));
         try {
             while (true) {
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(500));
@@ -45,11 +42,11 @@ public class AggregationStarter {
                     Optional<SensorsSnapshotAvro> snapshotOpt = aggregator.updateState(event);
                     snapshotOpt.ifPresent(snapshot -> {
                         log.info("Обновлен снимок состояния: {}", snapshot);
-                        producer.send(new ProducerRecord<>(snapshotTopic, snapshot.getHubId(), snapshot), (metadata, exception) -> {
+                        producer.send(new ProducerRecord<>(kafkaProperties.getTopics().getSnapshots(), snapshot.getHubId(), snapshot), (metadata, exception) -> {
                             if (exception != null) {
                                 log.error("Ошибка отправки в Kafka: {}", exception.getMessage());
                             } else {
-                                log.info("Сообщение успешно отправлено в Kafka в топик {}", snapshotTopic);
+                                log.info("Сообщение успешно отправлено в Kafka в топик {}", kafkaProperties.getTopics().getSnapshots());
                             }
                         });
                     });
@@ -57,6 +54,7 @@ public class AggregationStarter {
                 consumer.commitSync();
             }
         } catch (WakeupException ignored) {
+            // игнорируем - закрываем консьюмер и продюсер в блоке finally
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
