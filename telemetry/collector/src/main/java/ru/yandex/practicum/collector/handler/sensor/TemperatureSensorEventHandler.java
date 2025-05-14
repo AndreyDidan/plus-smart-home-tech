@@ -1,26 +1,19 @@
 package ru.yandex.practicum.collector.handler.sensor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.collector.handler.TimestampMapper;
 import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class TemperatureSensorEventHandler implements SensorEventHandler {
+public class TemperatureSensorEventHandler extends AbstractSensorEventHandler<TemperatureSensorAvro> {
 
-    @Value("${sensors}")
-    private String topic;
-    private final KafkaProducerService producerService;
+    public TemperatureSensorEventHandler(KafkaProducerService producerService) {
+        super(producerService);
+    }
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
@@ -28,26 +21,16 @@ public class TemperatureSensorEventHandler implements SensorEventHandler {
     }
 
     @Override
-    public void handle(SensorEventProto eventProto) {
-        SensorEventAvro eventAvro = map(eventProto);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
-        );
-        producerService.sendEvent(record, TemperatureSensorAvro.class);
-        log.info("Событие из sensor ID = {} отправлено в топик: {}", eventAvro.getId(), topic);
+    protected TemperatureSensorAvro mapPayload(SensorEventProto proto) {
+        TemperatureSensorProto temperatureSensorProto = proto.getTemperatureSensorEvent();
+        return TemperatureSensorAvro.newBuilder()
+                .setTemperatureC(temperatureSensorProto.getTemperatureC())
+                .setTemperatureF(temperatureSensorProto.getTemperatureF())
+                .build();
     }
 
-    private SensorEventAvro map(SensorEventProto eventProto) {
-        TemperatureSensorProto temperatureSensorProto = eventProto.getTemperatureSensorEvent();
-        TemperatureSensorAvro temperatureSensorAvro = TemperatureSensorAvro.newBuilder()
-                .setTemperatureF(temperatureSensorProto.getTemperatureF())
-                .setTemperatureC(temperatureSensorProto.getTemperatureC())
-                .build();
-        return SensorEventAvro.newBuilder()
-                .setId(eventProto.getId())
-                .setHubId(eventProto.getHubId())
-                .setTimestamp(TimestampMapper.mapToInstant(eventProto.getTimestamp()))
-                .setPayload(temperatureSensorAvro)
-                .build();
+    @Override
+    protected Class<TemperatureSensorAvro> getEventClass() {
+        return TemperatureSensorAvro.class;
     }
 }
