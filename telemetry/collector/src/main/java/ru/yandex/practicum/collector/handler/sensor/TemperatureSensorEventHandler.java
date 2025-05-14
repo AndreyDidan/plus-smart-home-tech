@@ -7,7 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.collector.handler.TimestampMapper;
-import ru.yandex.practicum.collector.kafka.KafkaClient;
+import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
@@ -18,9 +18,9 @@ import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 @RequiredArgsConstructor
 public class TemperatureSensorEventHandler implements SensorEventHandler {
 
-    @Value(value = "${sensors}")
+    @Value("${sensors}")
     private String topic;
-    private final KafkaClient kafkaClient;
+    private final KafkaProducerService producerService;
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
@@ -30,9 +30,10 @@ public class TemperatureSensorEventHandler implements SensorEventHandler {
     @Override
     public void handle(SensorEventProto eventProto) {
         SensorEventAvro eventAvro = map(eventProto);
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(topic, null,
-                eventAvro.getTimestamp().getEpochSecond(), null, eventAvro);
-        kafkaClient.getProducer().send(producerRecord);
+        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
+        );
+        producerService.sendEvent(record, TemperatureSensorAvro.class);
         log.info("Событие из sensor ID = {} отправлено в топик: {}", eventAvro.getId(), topic);
     }
 
