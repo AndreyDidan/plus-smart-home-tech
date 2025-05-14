@@ -8,3 +8,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer
       group-id: aggregator-group
+      auto-offset-reset: earliest
+kafka:
+  topics:
+    sensors: telemetry.sensors.v1
+    snapshots: telemetry.snapshots.v1
