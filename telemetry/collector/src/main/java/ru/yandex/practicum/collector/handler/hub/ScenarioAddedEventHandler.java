@@ -1,12 +1,7 @@
 package ru.yandex.practicum.collector.handler.hub;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.collector.handler.TimestampMapper;
 import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
@@ -18,12 +13,11 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class ScenarioAddedEventHandler implements HubEventHandler {
+public class ScenarioAddedEventHandler extends AbstractHubEventHandler<ScenarioAddedEventAvro> {
 
-    @Value("${hubs}")
-    private String topic;
-    private final KafkaProducerService producerService;
+    public ScenarioAddedEventHandler(KafkaProducerService producerService) {
+        super(producerService);
+    }
 
     @Override
     public HubEventProto.PayloadCase getMessageType() {
@@ -31,55 +25,48 @@ public class ScenarioAddedEventHandler implements HubEventHandler {
     }
 
     @Override
-    public void handle(HubEventProto eventProto) {
-        HubEventAvro eventAvro = map(eventProto);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
-        );
-        producerService.sendEvent(record, ScenarioAddedEventAvro.class);
-        log.info("Событие из hub ID = {} отправлено в топик: {}", eventAvro.getHubId(), topic);
-    }
-
-    private HubEventAvro map(HubEventProto eventProto) {
-        ScenarioAddedEventProto scenarioAddedEventProto = eventProto.getScenarioAdded();
-        List<DeviceActionAvro> deviceActionAvroList = scenarioAddedEventProto.getActionList().stream()
-                .map(this::map)
+    protected ScenarioAddedEventAvro mapPayload(HubEventProto eventProto) {
+        ScenarioAddedEventProto proto = eventProto.getScenarioAdded();
+        List<DeviceActionAvro> actions = proto.getActionList().stream()
+                .map(this::mapAction)
                 .toList();
-        List<ScenarioConditionAvro> scenarioConditionAvroList = scenarioAddedEventProto.getConditionList().stream()
-                .map(this::map)
+
+        List<ScenarioConditionAvro> conditions = proto.getConditionList().stream()
+                .map(this::mapCondition)
                 .toList();
-        ScenarioAddedEventAvro scenarioAddedEventAvro = ScenarioAddedEventAvro.newBuilder()
-                .setName(scenarioAddedEventProto.getName())
-                .setActions(deviceActionAvroList)
-                .setConditions(scenarioConditionAvroList)
-                .build();
-        return HubEventAvro.newBuilder()
-                .setHubId(eventProto.getHubId())
-                .setTimestamp(TimestampMapper.mapToInstant(eventProto.getTimestamp()))
-                .setPayload(scenarioAddedEventAvro)
+
+        return ScenarioAddedEventAvro.newBuilder()
+                .setName(proto.getName())
+                .setActions(actions)
+                .setConditions(conditions)
                 .build();
     }
 
-    private ScenarioConditionAvro map(ScenarioConditionProto conditionProto) {
-        Object value = null;
-        if (conditionProto.getValueCase() == ScenarioConditionProto.ValueCase.INT_VALUE) {
-            value = conditionProto.getIntValue();
-        } else if (conditionProto.getValueCase() == ScenarioConditionProto.ValueCase.BOOL_VALUE) {
-            value = conditionProto.getBoolValue();
-        }
-        return ScenarioConditionAvro.newBuilder()
-                .setSensorId(conditionProto.getSensorId())
-                .setType(ConditionTypeAvro.valueOf(conditionProto.getType().name()))
-                .setOperation(ConditionOperationAvro.valueOf(conditionProto.getOperation().name()))
-                .setValue(value)
-                .build();
+    @Override
+    protected Class<ScenarioAddedEventAvro> getEventClass() {
+        return ScenarioAddedEventAvro.class;
     }
 
-    private DeviceActionAvro map(DeviceActionProto actionProto) {
+    private DeviceActionAvro mapAction(DeviceActionProto actionProto) {
         return DeviceActionAvro.newBuilder()
                 .setSensorId(actionProto.getSensorId())
                 .setValue(actionProto.getValue())
                 .setType(ActionTypeAvro.valueOf(actionProto.getType().name()))
                 .build();
+    }
+
+    private ScenarioConditionAvro mapCondition(ScenarioConditionProto conditionProto) {
+        ScenarioConditionAvro.Builder builder = ScenarioConditionAvro.newBuilder()
+                .setSensorId(conditionProto.getSensorId())
+                .setType(ConditionTypeAvro.valueOf(conditionProto.getType().name()))
+                .setOperation(ConditionOperationAvro.valueOf(conditionProto.getOperation().name()));
+
+        switch (conditionProto.getValueCase()) {
+            case INT_VALUE -> builder.setValue(conditionProto.getIntValue());
+            case BOOL_VALUE -> builder.setValue(conditionProto.getBoolValue());
+            default -> builder.setValue(null);
+        }
+
+        return builder.build();
     }
 }

@@ -1,26 +1,19 @@
 package ru.yandex.practicum.collector.handler.sensor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.collector.handler.TimestampMapper;
 import ru.yandex.practicum.collector.service.KafkaProducerService;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.SwitchSensorProto;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class SwitchSensorEventHandler implements SensorEventHandler {
+public class SwitchSensorEventHandler extends AbstractSensorEventHandler<SwitchSensorAvro> {
 
-    @Value("${sensors}")
-    private String topic;
-    private final KafkaProducerService producerService;
+    public SwitchSensorEventHandler(KafkaProducerService producerService) {
+        super(producerService);
+    }
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
@@ -28,25 +21,15 @@ public class SwitchSensorEventHandler implements SensorEventHandler {
     }
 
     @Override
-    public void handle(SensorEventProto eventProto) {
-        SensorEventAvro eventAvro = map(eventProto);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
-        );
-        producerService.sendEvent(record, SwitchSensorAvro.class);
-        log.info("Событие из sensor ID = {} отправлено в топик: {}", eventAvro.getId(), topic);
+    protected SwitchSensorAvro mapPayload(SensorEventProto proto) {
+        SwitchSensorProto source = proto.getSwitchSensorEvent();
+        return SwitchSensorAvro.newBuilder()
+                .setState(source.getState())
+                .build();
     }
 
-    private SensorEventAvro map(SensorEventProto eventProto) {
-        SwitchSensorProto switchSensorProto = eventProto.getSwitchSensorEvent();
-        SwitchSensorAvro switchSensorAvro = SwitchSensorAvro.newBuilder()
-                .setState(switchSensorProto.getState())
-                .build();
-        return SensorEventAvro.newBuilder()
-                .setId(eventProto.getId())
-                .setHubId(eventProto.getHubId())
-                .setTimestamp(TimestampMapper.mapToInstant(eventProto.getTimestamp()))
-                .setPayload(switchSensorAvro)
-                .build();
+    @Override
+    protected Class<SwitchSensorAvro> getEventClass() {
+        return SwitchSensorAvro.class;
     }
 }
