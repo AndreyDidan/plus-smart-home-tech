@@ -34,10 +34,10 @@ public abstract class AbstractHubEventHandler<T extends SpecificRecordBase> impl
                 .setPayload(payload)
                 .build();
 
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
-        );
-        producerService.sendEvent(record, getEventClass());
-        log.info("Событие из hub ID = {} отправлено в топик: {}", eventAvro.getHubId(), topic);
+        String hubId = eventProto.getHubId();
+        long timestamp = eventAvro.getTimestamp().getEpochSecond();
+
+        producerService.sendEvent(hubId, timestamp, eventAvro, topic, getEventClass());
+        log.info("Событие из hub ID = {} отправлено в топик: {}", hubId, topic);
     }
 }

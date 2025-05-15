@@ -35,11 +35,10 @@ public abstract class AbstractSensorEventHandler<T extends SpecificRecordBase> i
                 .setPayload(payload)
                 .build();
 
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic, null, eventAvro.getTimestamp().getEpochSecond(), null, eventAvro
-        );
+        String hubId = eventProto.getHubId();
+        long timestamp = eventAvro.getTimestamp().getEpochSecond();
 
-        producerService.sendEvent(record, getEventClass());
+        producerService.sendEvent(hubId, timestamp, eventAvro, topic, getEventClass());
         log.info("Событие из sensor ID = {} отправлено в топик: {}", eventAvro.getId(), topic);
     }
 }

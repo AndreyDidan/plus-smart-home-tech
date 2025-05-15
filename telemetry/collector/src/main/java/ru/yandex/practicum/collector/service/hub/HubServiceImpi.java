@@ -24,15 +24,13 @@ public class HubServiceImpi implements HubService {
     @Override
     public void sendHubEvent(HubEvent hubEvent) {
         HubEventAvro hubEventAvro = mapToAvro(hubEvent);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topicHubs,
-                null,
-                hubEvent.getTimestamp().toEpochMilli(),
+        kafkaProducerService.sendEvent(
                 hubEvent.getHubId(),
-                hubEventAvro
+                hubEvent.getTimestamp().toEpochMilli(),
+                hubEventAvro,
+                topicHubs,
+                hubEvent.getClass()
         );
-
-        kafkaProducerService.sendEvent(record, hubEvent.getClass());
     }
 
     public HubEventAvro mapToAvro(HubEvent hubEvent) {

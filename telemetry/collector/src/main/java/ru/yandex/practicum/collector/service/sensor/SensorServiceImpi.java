@@ -21,15 +21,13 @@ public class SensorServiceImpi implements SensorService {
     @Override
     public void sendSensorService(SensorEvent sensorEvent) {
         SensorEventAvro sensorEventAvro = mapToAvro(sensorEvent);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topicSensors,
-                null,
-                sensorEvent.getTimestamp().toEpochMilli(),
+        kafkaProducerService.sendEvent(
                 sensorEvent.getHubId(),
-                sensorEventAvro
+                sensorEvent.getTimestamp().toEpochMilli(),
+                sensorEventAvro,
+                topicSensors,
+                sensorEvent.getClass()
         );
-
-        kafkaProducerService.sendEvent(record, sensorEvent.getClass());
     }
 
     private SensorEventAvro mapToAvro(SensorEvent sensorEvent) {
