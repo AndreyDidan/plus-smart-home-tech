@@ -2,7 +2,6 @@ package ru.yandex.practicum.collector.handler.hub;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import ru.yandex.practicum.collector.handler.TimestampMapper;
 import ru.yandex.practicum.collector.service.KafkaProducerService;

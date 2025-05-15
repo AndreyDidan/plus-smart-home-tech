@@ -1,8 +1,6 @@
 package ru.yandex.practicum.collector.service.hub;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.collector.service.KafkaProducerService;
