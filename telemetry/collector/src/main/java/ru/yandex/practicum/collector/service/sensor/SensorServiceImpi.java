@@ -1,8 +1,6 @@
 package ru.yandex.practicum.collector.service.sensor;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.collector.model.sensor.*;
@@ -21,15 +19,13 @@ public class SensorServiceImpi implements SensorService {
     @Override
     public void sendSensorService(SensorEvent sensorEvent) {
         SensorEventAvro sensorEventAvro = mapToAvro(sensorEvent);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topicSensors,
-                null,
-                sensorEvent.getTimestamp().toEpochMilli(),
+        kafkaProducerService.sendEvent(
                 sensorEvent.getHubId(),
-                sensorEventAvro
+                sensorEvent.getTimestamp().toEpochMilli(),
+                sensorEventAvro,
+                topicSensors,
+                sensorEvent.getClass()
         );
-
-        kafkaProducerService.sendEvent(record, sensorEvent.getClass());
     }
 
     private SensorEventAvro mapToAvro(SensorEvent sensorEvent) {
