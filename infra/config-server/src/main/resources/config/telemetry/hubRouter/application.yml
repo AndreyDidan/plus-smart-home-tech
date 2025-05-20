@@ -1,3 +1,11 @@
+application:
+  name: hubRouter
+
 grpc:
   server:
     port: 59090
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
