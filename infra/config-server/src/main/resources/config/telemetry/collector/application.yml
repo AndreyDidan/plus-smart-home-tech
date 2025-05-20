@@ -1,6 +1,15 @@
+spring:
+  application:
+    name: collector
+
 kafka_server: localhost:9092
 key_serializer: org.apache.kafka.common.serialization.StringSerializer
 value_serializer: ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer
 sensors: telemetry.sensors.v1
 hubs: telemetry.hubs.v1
 grpc.server.port: 59091
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
