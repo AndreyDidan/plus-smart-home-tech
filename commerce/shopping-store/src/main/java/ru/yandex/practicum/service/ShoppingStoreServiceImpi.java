@@ -29,11 +29,23 @@ public class ShoppingStoreServiceImpi implements ShoppingStoreService {
         log.info("Запуск метода getProductPage, на входе productCategory :{}, pageable {}", productCategory, pageable);
         int page = pageable.getPage() != null ? pageable.getPage() : 0;
         int size = pageable.getSize() != null ? pageable.getSize() : 10;
-        String sortField = (pageable.getSort() != null && !pageable.getSort().isEmpty())
-                ? pageable.getSort().get(0)
-                : "productName";
 
-        Sort sort = Sort.by(sortField).ascending();
+        Sort sort = Sort.unsorted();
+
+        if (pageable.getSort() != null && !pageable.getSort().isEmpty()) {
+            List<Sort.Order> orders = pageable.getSort().stream()
+                    .map(sortParam -> {
+                        String[] parts = sortParam.split(":");
+                        String field = parts[0];
+                        boolean isDesc = parts.length > 1 && parts[1].equalsIgnoreCase("desc");
+                        return new Sort.Order(isDesc ? Sort.Direction.DESC : Sort.Direction.ASC, field);
+                    })
+                    .toList();
+            sort = Sort.by(orders);
+        } else {
+            sort = Sort.by("productName").ascending();
+        }
+
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<Product> pageResult = shoppingStoreRepository.findByProductCategory(productCategory, pageRequest);
 
@@ -72,15 +84,14 @@ public class ShoppingStoreServiceImpi implements ShoppingStoreService {
     }
 
     @Override
-    public boolean deleteProduct(UUID productId) {
+    @Transactional
+    public void deleteProduct(UUID productId) {
         log.info("Запуск метода deleteProduct, на входе productId :{}", productId);
-        if (!shoppingStoreRepository.existsById(productId)) {
-            throw new NotFoundException("Товар с id " + productId + " не найден");
-        }
-        Product product = shoppingStoreRepository.findById(productId).get();
+        Product product = shoppingStoreRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Товар с id " + productId + " не найден"));
+
         product.setProductState(ProductState.DEACTIVATE);
         shoppingStoreRepository.save(product);
-        return true;
     }
 
     @Transactional

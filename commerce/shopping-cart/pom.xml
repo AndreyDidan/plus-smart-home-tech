@@ -15,8 +15,6 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.mapstruct.version>1.6.3</org.mapstruct.version>
-        <mapstruct.binding.version>0.2.0</mapstruct.binding.version>
     </properties>
 
     <dependencies>
@@ -74,13 +72,11 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${org.mapstruct.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok-mapstruct-binding</artifactId>
-            <version>${mapstruct.binding.version}</version>
         </dependency>
         <dependency>
             <groupId>ru.yandex.practicum</groupId>

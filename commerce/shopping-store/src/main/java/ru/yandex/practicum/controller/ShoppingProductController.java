@@ -35,8 +35,8 @@ public class ShoppingProductController implements ShoppingStoreClient {
     }
 
     @Override
-    public boolean removeProduct(UUID productId) {
-        return shoppingStoreService.deleteProduct(productId);
+    public void removeProduct(UUID productId) {
+        shoppingStoreService.deleteProduct(productId);
     }
 
     @Override

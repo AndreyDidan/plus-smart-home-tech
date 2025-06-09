@@ -26,8 +26,11 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
     public ShoppingCartDto getShoppingCart(String username) {
         log.info("Запуск метода getShoppingCart, на входе username: {}", username);
         validUserName(username);
-        return mapper.shoppingCartDtoToCart(shoppingCartRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Корзины для пользователя " + username + " нет")));
+        Optional<Cart> optionalCart = shoppingCartRepository.findByUsername(username);
+        if (optionalCart.isPresent()) {
+            return mapper.shoppingCartDtoToCart(optionalCart.get());
+        }
+        return addProduct(username, Collections.emptyMap());
     }
 
     @Transactional
@@ -45,6 +48,7 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
             cartProducts.forEach((key, value) -> {
                 shoppingCart.getCartProducts().put(key, value);
             });
+            warehouseClient.checkProductQuantity(mapper.shoppingCartDtoToCart(shoppingCart));
             return mapper.shoppingCartDtoToCart(shoppingCartRepository.save(shoppingCart));
         } else {
             throw new ValidateException("Корзины для пользователя " + username + " нет");
@@ -89,9 +93,12 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         Cart cart = shoppingCartRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Корзины для пользователя " + username + " нет"));
         cart.getCartProducts().put(changeProductQuantityRequest.getProductId(), changeProductQuantityRequest.getNewQuantity());
+
+        log.info("Проверки bookedProductsDto, на входе:{}", mapper.shoppingCartDtoToCart(cart));
+        warehouseClient.checkProductQuantity(mapper.shoppingCartDtoToCart(cart));
+
         Cart saveCart = shoppingCartRepository.save(cart);
         return mapper.shoppingCartDtoToCart(saveCart);
-
     }
 
     @Transactional
@@ -101,8 +108,8 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         validUserName(username);
         Cart cart = shoppingCartRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Корзины для пользователя " + username + " нет"));
-
-        log.info("получили корзину: {}", cart);
+        validateCartNotEmpty(cart);
+        log.info("Получили корзину: {}", cart);
         return warehouseClient.checkProductQuantity(mapper.shoppingCartDtoToCart(cart));
     }
 
@@ -110,6 +117,12 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         log.info("Проверяем валидность имени пользователя, на входе username: {}", username);
         if (username == null || username.isEmpty()) {
             throw new NotAuthorizedUserException("Имя пользователя не должно быть пустым.");
+        }
+    }
+
+    private void validateCartNotEmpty(Cart cart) {
+        if (cart.getCartProducts() == null || cart.getCartProducts().isEmpty()) {
+            throw new ValidateException("Корзина пуста.");
         }
     }
 }

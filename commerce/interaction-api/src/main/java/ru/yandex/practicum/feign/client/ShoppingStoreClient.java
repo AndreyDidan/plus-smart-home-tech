@@ -11,7 +11,7 @@ import ru.yandex.practicum.model.SetProductQuantityStateRequest;
 
 import java.util.UUID;
 
-@FeignClient(name = "shopping-store")
+@FeignClient(name = "shopping-store", path = "/api/v1/shopping-store")
 public interface ShoppingStoreClient {
 
     @GetMapping
@@ -24,7 +24,7 @@ public interface ShoppingStoreClient {
     ProductDto updateProduct(@RequestBody @Valid ProductDto productDto);
 
     @PostMapping("/removeProductFromStore")
-    boolean removeProduct(@RequestBody UUID productId);
+    void removeProduct(@RequestBody UUID productId);
 
     @PostMapping("/quantityState")
     boolean setProductQuantityState(SetProductQuantityStateRequest setProductQuantityStateRequest);

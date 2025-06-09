@@ -13,9 +13,11 @@ import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.model.*;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,12 +41,16 @@ public class WarehouseServiceImpi implements WarehouseService {
     @Transactional
     @Override
     public BookedProductsDto checkProductQuantity(ShoppingCartDto shoppingCartDto) {
-        log.info("Запуск метода checkProductQuantity,на входе shoppingCartDto:{}", shoppingCartDto);
+        log.info("Запуск метода checkProductQuantity, на входе shoppingCartDto:{}", shoppingCartDto);
         Set<UUID> requestProducts = shoppingCartDto.getProducts().keySet();
         List<WarehouseProduct> products = warehouseRepository.findAllById(requestProducts);
-
-        if (products.size() < requestProducts.size()) {
-            throw new NotFoundException("Часть товара не найдена складе");
+        Set<UUID> foundProductIds = products.stream()
+                .map(WarehouseProduct::getProductId)
+                .collect(Collectors.toSet());
+        Set<UUID> missingProductIds = new HashSet<>(requestProducts);
+        missingProductIds.removeAll(foundProductIds);
+        if (!missingProductIds.isEmpty()) {
+            throw new NotFoundException("Следующие товары не найдены на складе: " + missingProductIds);
         }
 
         for (WarehouseProduct product : products) {
@@ -58,14 +64,16 @@ public class WarehouseServiceImpi implements WarehouseService {
         double deliveryVolumeSum = 0;
         boolean areThereAnyFragile = false;
 
+        log.info("Перемножаем WarehouseProduct product");
         for (WarehouseProduct product : products) {
             weightSum += product.getWeight() * product.getQuantity();
-            deliveryVolumeSum += product.getWeight() * product.getDepth() * product.getWidth() * product.getQuantity();
+            deliveryVolumeSum += product.getDepth() * product.getWidth() * product.getHeight() * product.getQuantity();
             if (product.isFragile()) {
                 areThereAnyFragile = true;
             }
         }
 
+        log.info("Строим BookedProductsDto");
         return BookedProductsDto.builder()
                 .deliveryWeight(weightSum)
                 .fragile(areThereAnyFragile)
@@ -82,7 +90,10 @@ public class WarehouseServiceImpi implements WarehouseService {
                     .getProductId() + " не найден");
         }
 
-        WarehouseProduct product = warehouseRepository.findById(addProductToWarehouseRequest.getProductId()).get();
+        WarehouseProduct product = warehouseRepository.findById(addProductToWarehouseRequest.getProductId()).orElseThrow(
+                () -> new NoSpecifiedProductInWarehouseException("Информация о товаре "
+                        + addProductToWarehouseRequest.getProductId() + " не найдена.")
+        );
         Long currentQty = product.getQuantity() != null ? product.getQuantity() : 0L;
         product.setQuantity(currentQty + addProductToWarehouseRequest.getQuantity());
         warehouseRepository.save(product);

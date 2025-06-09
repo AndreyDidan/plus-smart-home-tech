@@ -13,5 +13,4 @@ public interface WarehouseMapper {
     @Mapping(target = "width", source = "dto.dimension.width")
     @Mapping(target = "height", source = "dto.dimension.height")
     WarehouseProduct toMap(NewProductInWarehouseRequest dto);
-
 }
