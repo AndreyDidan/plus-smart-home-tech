@@ -30,7 +30,8 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         if (optionalCart.isPresent()) {
             return mapper.shoppingCartDtoToCart(optionalCart.get());
         }
-        return addProduct(username, Collections.emptyMap());
+        Cart newCart = createCartIfNotExists(username);
+        return mapper.shoppingCartDtoToCart(newCart);
     }
 
     @Transactional
@@ -38,12 +39,7 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
     public ShoppingCartDto addProduct(String username, Map<UUID, Long> cartProducts) {
         log.info("Запуск метода addProduct, на входе username :{}, cartProducts {}", username, cartProducts);
         validUserName(username);
-        Cart shoppingCart = shoppingCartRepository.findByUsername(username)
-                .orElse(shoppingCartRepository.save(Cart.builder()
-                        .username(username)
-                        .active(true)
-                        .cartProducts(new HashMap<>())
-                        .build()));
+        Cart shoppingCart = createCartIfNotExists(username);
         if (shoppingCart.isActive()) {
             cartProducts.forEach((key, value) -> {
                 shoppingCart.getCartProducts().put(key, value);
@@ -53,6 +49,15 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         } else {
             throw new ValidateException("Корзины для пользователя " + username + " нет");
         }
+    }
+
+    private Cart createCartIfNotExists(String username) {
+        return shoppingCartRepository.findByUsername(username)
+                .orElseGet(() -> shoppingCartRepository.save(Cart.builder()
+                        .username(username)
+                        .active(true)
+                        .cartProducts(new HashMap<>())
+                        .build()));
     }
 
     @Override
