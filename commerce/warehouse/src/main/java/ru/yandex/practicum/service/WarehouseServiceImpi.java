@@ -11,12 +11,11 @@ import ru.yandex.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse
 import ru.yandex.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.model.*;
+import ru.yandex.practicum.repository.BookingRepository;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,6 +24,7 @@ import java.util.stream.Collectors;
 public class WarehouseServiceImpi implements WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
+    private final BookingRepository bookingRepository;
     private final WarehouseMapper mapper;
 
     @Transactional
@@ -109,5 +109,101 @@ public class WarehouseServiceImpi implements WarehouseService {
                 defValue,
                 defValue
         );
+    }
+
+    @Override
+    public void shippedDelivery(ShippedToDeliveryRequest shippedToDeliveryRequest) {
+        log.info("Запуск метода shippedDelivery,на входе shippedToDeliveryRequest:{}", shippedToDeliveryRequest);
+        Optional<Booking> booking = bookingRepository.findByOrderId(shippedToDeliveryRequest.getOrderId());
+        if (booking.isEmpty()) {
+            throw new NotFoundException("Заказ с таким orderId:" + shippedToDeliveryRequest.getOrderId() + " не найден");
+        }
+        Booking updatedBooking = booking.get();
+        updatedBooking.setDeliveryId(shippedToDeliveryRequest.getDeliveryId());
+        bookingRepository.save(updatedBooking);
+    }
+
+    @Override
+    @Transactional
+    public void productToWarehouse(Map<UUID, Integer> products) {
+        log.info("Запуск метода productToWarehouse,на входе products:{}", products);
+        List<WarehouseProduct> savedProducts = warehouseRepository.findAllById(products.keySet());
+        if (savedProducts.size() < products.size()) {
+            throw new NotFoundException("Часть товара не найдена складе");
+        }
+        Set<WarehouseProduct> updatedProducts = new HashSet<>();
+        for (WarehouseProduct savedProduct : savedProducts) {
+            Integer quantity = products.get(savedProduct.getProductId());
+            savedProduct.setQuantity(savedProduct.getQuantity() + quantity);
+            updatedProducts.add(savedProduct);
+        }
+        warehouseRepository.saveAll(updatedProducts);
+    }
+
+    @Override
+    @Transactional
+    public BookedProductsDto orderAssembly(AssemblyProductsForOrderRequest assemblyProductsForOrderRequest) {
+        log.info("Запуск метода orderAssembly,на входе assemblyProductsForOrderRequest:{}", assemblyProductsForOrderRequest);
+        Map<UUID, Long> orderProducts = assemblyProductsForOrderRequest.getProducts();
+        Map<UUID, WarehouseProduct> products = getWarehouseProducts(orderProducts.keySet());
+
+        double weight = 0;
+        double volume = 0;
+        boolean fragile = false;
+        for (Map.Entry<UUID, Long> cartProduct : orderProducts.entrySet()) {
+            WarehouseProduct product = products.get(cartProduct.getKey());
+            long newQuantity = product.getQuantity() - cartProduct.getValue();
+            if (newQuantity < 0) {
+                throw new ProductInShoppingCartLowQuantityInWarehouse(
+                        "Ошибка, товар из корзины не находится в требуемом количестве на складе");
+            }
+            product.setQuantity(newQuantity);
+            weight += product.getWeight() * cartProduct.getValue();
+            volume += product.getHeight() * product.getWeight() * product.getDepth() * cartProduct.getValue();
+            fragile = fragile || product.isFragile();
+        }
+        addBooking(assemblyProductsForOrderRequest);
+        saveWarehouseRemains(products.values());
+
+        return new BookedProductsDto(
+                weight,
+                volume,
+                fragile
+        );
+    }
+
+    private WarehouseProduct getWarehouseProduct(UUID productId) {
+        return warehouseRepository.findById(productId).orElseThrow(
+                () -> new NoSpecifiedProductInWarehouseException("Нет информации о товаре на складе")
+        );
+    }
+
+    private Booking getBookingById(UUID orderId) {
+        return bookingRepository.findById(orderId).orElseThrow(
+                () -> new NotFoundException("Нет информации о бронировании товаров по заказу")
+        );
+    }
+
+    Map<UUID, WarehouseProduct> getWarehouseProducts(Collection<UUID> ids) {
+        Map<UUID, WarehouseProduct> products = warehouseRepository.findAllById(ids)
+                .stream()
+                .collect(Collectors.toMap(WarehouseProduct::getProductId, Function.identity()));
+        if (products.size() != ids.size()) {
+            throw new ProductInShoppingCartLowQuantityInWarehouse("Некоторых товаров нет на складе");
+        }
+
+        return products;
+    }
+
+    void addBooking(AssemblyProductsForOrderRequest request) {
+        Booking booking = Booking.builder()
+                .orderId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+        bookingRepository.save(booking);
+    }
+
+    void saveWarehouseRemains(Collection<WarehouseProduct> products) {
+        warehouseRepository.saveAll(products);
     }
 }

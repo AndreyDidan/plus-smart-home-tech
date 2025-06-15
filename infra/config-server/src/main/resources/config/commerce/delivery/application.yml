@@ -1,0 +1,22 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: delivery
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: 'jdbc:postgresql://localhost:9432/delivery_db'
+    username: user
+    password: 12345
