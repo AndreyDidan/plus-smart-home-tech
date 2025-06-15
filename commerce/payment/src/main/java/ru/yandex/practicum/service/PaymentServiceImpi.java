@@ -52,7 +52,7 @@ public class PaymentServiceImpi implements PaymentService {
     @Override
     public void paymentSuccess(UUID orderId) {
         log.info("Запуск метода paymentSuccess, на входе orderDto: {}", orderId);
-        Payment payment = paymentRepository.findById(orderId).orElseThrow(
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(
                 () -> new ValidateException("В заказе недостаточно инофрмации для рассчёта"));
         payment.setPaymentState(PaymentState.SUCCESS);
         orderClient.payment(payment.getOrderId());
@@ -77,7 +77,7 @@ public class PaymentServiceImpi implements PaymentService {
     @Override
     public void paymentFailed(UUID orderId) {
         log.info("Запуск метода paymentFailed, на входе orderDto: {}", orderId);
-        Payment payment = paymentRepository.findById(orderId).orElseThrow(
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(
                 () -> new ValidateException("В заказе недостаточно инофрмации для рассчёта"));
         payment.setPaymentState(PaymentState.FAILED);
         orderClient.paymentFailed(payment.getOrderId());

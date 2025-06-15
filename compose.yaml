@@ -95,7 +95,7 @@ services:
     image: postgres:16.1
     container_name: payment_db
     ports:
-      - "3432:5432"
+      - "4432:5432"
     environment:
       - POSTGRES_PASSWORD=12345
       - POSTGRES_USER=user

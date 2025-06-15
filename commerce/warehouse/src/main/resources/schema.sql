@@ -19,5 +19,5 @@ CREATE TABLE IF NOT EXISTS booking_products (
     product_id       UUID NOT NULL,
     quantity         BIGINT,
     CONSTRAINT booking_products_pk PRIMARY KEY (booking_id, product_id),
-    CONSTRAINT booking_products_booking_fk FOREIGN KEY (booking_id) REFERENCES booking(booking_id) ON DELETE CASCADE
+    CONSTRAINT booking_products_booking_fk FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
 );

@@ -17,6 +17,6 @@ spring:
       mode: always
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: 'jdbc:postgresql://localhost:3432/payment_db'
+    url: 'jdbc:postgresql://localhost:4432/payment_db'
     username: user
     password: 12345
