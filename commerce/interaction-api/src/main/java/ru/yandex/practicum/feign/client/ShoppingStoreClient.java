@@ -16,7 +16,7 @@ import java.util.UUID;
 public interface ShoppingStoreClient {
 
     @GetMapping
-    Page<ProductDto> getProducts(@RequestParam(name = "category") @NotNull ProductCategory category, @Valid Pageable pageable);
+    Page<ProductDto> getProducts(@RequestParam(name = "category") ProductCategory category, @Valid Pageable pageable);
 
     @PutMapping
     ProductDto addProduct(@RequestBody @Valid ProductDto productDto);
