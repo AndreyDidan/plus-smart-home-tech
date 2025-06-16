@@ -10,7 +10,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "deliveryes")
+@Table(name = "deliveries")
 public class Delivery {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -18,10 +18,12 @@ public class Delivery {
     private UUID deliveryId;
     @Column(name = "order_id")
     private UUID orderId;
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "from_address_id")
     private Address fromAddress;
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "to_address_id")
     private Address toAddress;
     @Enumerated(value = EnumType.STRING)

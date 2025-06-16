@@ -48,4 +48,9 @@ public class ShoppingCartController implements ShoppingCartClient {
     public BookedProductsDto bookProducts(String username) {
         return shoppingCartService.bookShoppingCartInWarehouse(username);
     }
+
+    @Override
+    public String getUserName(UUID cartId) {
+        return shoppingCartService.getUserName(cartId);
+    }
 }

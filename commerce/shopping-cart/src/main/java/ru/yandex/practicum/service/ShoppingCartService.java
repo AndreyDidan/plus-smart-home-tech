@@ -20,4 +20,6 @@ public interface ShoppingCartService {
     ShoppingCartDto changeQuantity(String username, ChangeProductQuantityRequest changeProductQuantityRequest);
 
     BookedProductsDto bookShoppingCartInWarehouse(String username);
+
+    String getUserName(UUID cartId);
 }

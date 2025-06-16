@@ -34,6 +34,14 @@ public class ShoppingCartServiceImpi implements ShoppingCartService {
         return mapper.shoppingCartDtoToCart(newCart);
     }
 
+    @Override
+    public String getUserName(UUID cartId) {
+        log.info("Запуск метода getUserName, на входе cartId: {}", cartId);
+        Cart cartUser = shoppingCartRepository.findByCartId(cartId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с картой " + cartId + " нет"));
+        return cartUser.getUsername();
+    }
+
     @Transactional
     @Override
     public ShoppingCartDto addProduct(String username, Map<UUID, Long> cartProducts) {

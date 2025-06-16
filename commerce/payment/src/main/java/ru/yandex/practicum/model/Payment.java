@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -22,11 +23,11 @@ public class Payment {
     @Column(name = "order_id")
     private UUID orderId;
     @Column(name = "delivery_total")
-    private Double deliveryTotal;
+    private BigDecimal deliveryTotal;
     @Column(name = "total_payment")
-    private Double totalPayment;
+    private BigDecimal totalPayment;
     @Column(name = "fee_total")
-    private Double feeTotal;
+    private BigDecimal feeTotal;
     @Enumerated(value = EnumType.STRING)
     @Column(name = "payment_state")
     private PaymentState paymentState;

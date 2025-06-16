@@ -13,17 +13,19 @@ import ru.yandex.practicum.mapper.DeliveryMapper;
 import ru.yandex.practicum.model.*;
 import ru.yandex.practicum.repository.DeliveryRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DeliveryServiceImpi implements DeliveryService {
-    private static final Double BASE_PRICE = 5.0;
-    private static final Double FRAGILE_PRICE = 0.2;
-    private static final Double WEIGHT_PRICE = 0.3;
-    private static final Double VOLUME_ACTION = 0.2;
-    private static final Double IS_STREET_NOT_STREET_WAREHOUSE = 0.2;
+    private static final BigDecimal BASE_PRICE = BigDecimal.valueOf(5.0);
+    private static final BigDecimal FRAGILE_PRICE = BigDecimal.valueOf(0.2);
+    private static final BigDecimal WEIGHT_PRICE = BigDecimal.valueOf(0.3);
+    private static final BigDecimal VOLUME_ACTION = BigDecimal.valueOf(0.2);
+    private static final BigDecimal IS_STREET_NOT_STREET_WAREHOUSE = BigDecimal.valueOf(0.2);
 
     private final DeliveryRepository deliveryRepository;
     private final DeliveryMapper mapper;
@@ -62,6 +64,7 @@ public class DeliveryServiceImpi implements DeliveryService {
         ShippedToDeliveryRequest shippedToDeliveryRequest = new ShippedToDeliveryRequest(
                 delivery.getOrderId(), delivery.getDeliveryId());
         warehouseClient.shippedDelivery(shippedToDeliveryRequest);
+        orderClient.assembly(orderId);
     }
 
     @Override
@@ -75,26 +78,30 @@ public class DeliveryServiceImpi implements DeliveryService {
 
     @Override
     @Transactional
-    public Double deliveryCost(OrderDto orderDto) {
+    public BigDecimal deliveryCost(OrderDto orderDto) {
         log.info("Запуск метода deliveryCost, на входе orderDto: {}", orderDto);
         Delivery delivery = findByOrderId(orderDto.getOrderId());
-        double priceDelivery;
+        BigDecimal priceDelivery;
+
         if (delivery.getFromAddress().getStreet().equals("ADDRESS_1")) {
-            priceDelivery = BASE_PRICE * 1 + BASE_PRICE;
+            priceDelivery = BASE_PRICE.multiply(BigDecimal.valueOf(1)).add(BASE_PRICE);
         } else if (delivery.getFromAddress().getStreet().equals("ADDRESS_2")) {
-            priceDelivery = BASE_PRICE * 2 + BASE_PRICE;
+            priceDelivery = BASE_PRICE.multiply(BigDecimal.valueOf(2)).add(BASE_PRICE);
         } else {
             throw new ValidateException("Работа с адресами кроме ADDRESS_1 и ADDRESS_2 не предусмотрена логикой программы");
         }
+
         if (orderDto.getFragile()) {
-            priceDelivery = priceDelivery + priceDelivery * FRAGILE_PRICE;
+            priceDelivery = priceDelivery.add(priceDelivery.multiply(FRAGILE_PRICE));
         }
-        priceDelivery = priceDelivery + orderDto.getDeliveryWeight() * WEIGHT_PRICE;
-        priceDelivery = priceDelivery + orderDto.getDeliveryVolume() * VOLUME_ACTION;
+        priceDelivery = priceDelivery.add(BigDecimal.valueOf(orderDto.getDeliveryWeight()).multiply(WEIGHT_PRICE));
+        priceDelivery = priceDelivery.add(BigDecimal.valueOf(orderDto.getDeliveryVolume()).multiply(VOLUME_ACTION));
+
         if (!delivery.getFromAddress().getStreet().equals(delivery.getToAddress().getStreet())) {
-            priceDelivery = priceDelivery + priceDelivery * IS_STREET_NOT_STREET_WAREHOUSE;
+            priceDelivery = priceDelivery.add(priceDelivery.multiply(IS_STREET_NOT_STREET_WAREHOUSE));
         }
-        return priceDelivery;
+
+        return priceDelivery.setScale(2, RoundingMode.HALF_UP);  // Установите нужный scale для округления
     }
 
     private Delivery findByOrderId(UUID orderId) {

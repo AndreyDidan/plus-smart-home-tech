@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.model.OrderDto;
 import ru.yandex.practicum.model.PaymentDto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @FeignClient(name = "payment", path = "/api/v1/payment")
@@ -15,7 +16,7 @@ public interface PaymentClient {
     PaymentDto addPayment(@RequestBody OrderDto orderDto);
 
     @PostMapping("/totalCost")
-    Double getTotalCost(@RequestBody OrderDto orderDto);
+    BigDecimal getTotalCost(@RequestBody OrderDto orderDto);
 
     @PostMapping("/refund")
     void paymentSuccess(@RequestBody UUID orderId);

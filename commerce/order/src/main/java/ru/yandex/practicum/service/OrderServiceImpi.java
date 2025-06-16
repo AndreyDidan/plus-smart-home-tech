@@ -7,13 +7,12 @@ import org.aspectj.weaver.ast.Or;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.exception.NotAuthorizedUserException;
 import ru.yandex.practicum.exception.NotFoundException;
-import ru.yandex.practicum.feign.client.DeliveryClient;
-import ru.yandex.practicum.feign.client.PaymentClient;
-import ru.yandex.practicum.feign.client.WarehouseClient;
+import ru.yandex.practicum.feign.client.*;
 import ru.yandex.practicum.mapper.OrderMapper;
 import ru.yandex.practicum.model.*;
 import ru.yandex.practicum.repository.OrderRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +26,7 @@ public class OrderServiceImpi implements OrderService {
     private final DeliveryClient deliveryClient;
     private final PaymentClient paymentClient;
     private final WarehouseClient warehouseClient;
+    private final ShoppingCartClient shoppingCartClient;
 
     @Override
     public List<OrderDto> getOrderDto(String username) {
@@ -43,16 +43,18 @@ public class OrderServiceImpi implements OrderService {
     public OrderDto addOrderDto(CreateNewOrderRequest createNewOrderRequest) {
         log.info("Запуск метода addOrderDto, на входе username: {}", createNewOrderRequest);
         BookedProductsDto bookedProducts = warehouseClient.checkProductQuantity(createNewOrderRequest.getShoppingCart());
+        String username = shoppingCartClient.getUserName(createNewOrderRequest.getShoppingCart().getShoppingCartId());
         Order order = Order.builder()
                 .shoppingCartId(createNewOrderRequest.getShoppingCart().getShoppingCartId())
+                .username(username)
                 .products(createNewOrderRequest.getShoppingCart().getProducts())
                 .state(OrderState.NEW)
                 .build();
-        Order newOrder = orderRepository.save(order);
         order = orderRepository.save(order);
 
         AddressDto warehouseAddress = warehouseClient.getAddress();
         DeliveryDto newDelivery = DeliveryDto.builder()
+                .deliveryId(UUID.randomUUID())
                 .fromAddress(warehouseAddress)
                 .toAddress(createNewOrderRequest.getDeliveryAddress())
                 .orderId(order.getOrderId())
@@ -73,6 +75,7 @@ public class OrderServiceImpi implements OrderService {
                 .orElseThrow(() -> new NotFoundException("Заказ не найден"));
         warehouseClient.productToWarehouse(productReturnRequest.getProducts());
         order.setState(OrderState.PRODUCT_RETURNED);
+        orderRepository.save(order);
         return mapper.orderToOrderDto(order);
     }
 
@@ -128,7 +131,7 @@ public class OrderServiceImpi implements OrderService {
     public OrderDto calculateDelivery(UUID orderId) {
         log.info("Запуск метода calculateDelivery, на входе username: {}", orderId);
         Order order = getOrder(orderId);
-        Double totalPrice = deliveryClient.deliveryCost(mapper.orderToOrderDto(order));
+        BigDecimal totalPrice = deliveryClient.deliveryCost(mapper.orderToOrderDto(order));
         order.setTotalPrice(totalPrice);
         return mapper.orderToOrderDto(orderRepository.save(order));
     }

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS address
     flat       VARCHAR NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS deliveryes
+CREATE TABLE IF NOT EXISTS deliveries
 (
     delivery_id      UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     order_id         UUID NOT NULL,
