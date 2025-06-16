@@ -29,7 +29,7 @@ public interface WarehouseClient {
     void shippedDelivery(@RequestBody ShippedToDeliveryRequest shippedToDeliveryRequest);
 
     @PostMapping("/return")
-    void productToWarehouse(@RequestBody Map<UUID,Integer> products);
+    void productToWarehouse(@RequestBody Map<UUID,Long> products);
 
     @PostMapping("/assembly")
     BookedProductsDto orderAssembly(@RequestBody AssemblyProductsForOrderRequest assemblyProductsForOrderRequest);

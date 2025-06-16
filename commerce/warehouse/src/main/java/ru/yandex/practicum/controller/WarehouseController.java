@@ -41,7 +41,7 @@ public class WarehouseController implements WarehouseClient {
     }
 
     @Override
-    public void productToWarehouse(Map<UUID, Integer> products) {
+    public void productToWarehouse(Map<UUID, Long> products) {
         service.productToWarehouse(products);
     }
 

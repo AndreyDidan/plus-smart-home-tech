@@ -125,7 +125,7 @@ public class WarehouseServiceImpi implements WarehouseService {
 
     @Override
     @Transactional
-    public void productToWarehouse(Map<UUID, Integer> products) {
+    public void productToWarehouse(Map<UUID, Long> products) {
         log.info("Запуск метода productToWarehouse,на входе products:{}", products);
         List<WarehouseProduct> savedProducts = warehouseRepository.findAllById(products.keySet());
         if (savedProducts.size() < products.size()) {
@@ -133,7 +133,7 @@ public class WarehouseServiceImpi implements WarehouseService {
         }
         Set<WarehouseProduct> updatedProducts = new HashSet<>();
         for (WarehouseProduct savedProduct : savedProducts) {
-            Integer quantity = products.get(savedProduct.getProductId());
+            Long quantity = products.get(savedProduct.getProductId());
             savedProduct.setQuantity(savedProduct.getQuantity() + quantity);
             updatedProducts.add(savedProduct);
         }

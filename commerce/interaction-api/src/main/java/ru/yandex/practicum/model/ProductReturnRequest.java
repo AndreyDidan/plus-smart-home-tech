@@ -17,5 +17,5 @@ public class ProductReturnRequest {
     @NotNull
     private UUID orderId;
 
-    private Map<UUID, Integer> products;
+    private Map<UUID, Long> products;
 }

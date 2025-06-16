@@ -16,7 +16,7 @@ public interface WarehouseService {
 
     void shippedDelivery(ShippedToDeliveryRequest shippedToDeliveryRequest);
 
-    void productToWarehouse(Map<UUID,Integer> products);
+    void productToWarehouse(Map<UUID,Long> products);
 
     BookedProductsDto orderAssembly(AssemblyProductsForOrderRequest assemblyProductsForOrderRequest);
 }
