@@ -6,6 +6,9 @@ import ru.yandex.practicum.feign.client.WarehouseClient;
 import ru.yandex.practicum.model.*;
 import ru.yandex.practicum.service.WarehouseService;
 
+import java.util.Map;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/warehouse")
 @AllArgsConstructor
@@ -30,5 +33,20 @@ public class WarehouseController implements WarehouseClient {
     @Override
     public AddressDto getAddress() {
         return service.getAddress();
+    }
+
+    @Override
+    public void shippedDelivery(ShippedToDeliveryRequest shippedToDeliveryRequest) {
+        service.shippedDelivery(shippedToDeliveryRequest);
+    }
+
+    @Override
+    public void productToWarehouse(Map<UUID, Long> products) {
+        service.productToWarehouse(products);
+    }
+
+    @Override
+    public BookedProductsDto orderAssembly(AssemblyProductsForOrderRequest assemblyProductsForOrderRequest) {
+        return service.orderAssembly(assemblyProductsForOrderRequest);
     }
 }

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.feign.client;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,7 @@ import java.util.UUID;
 public interface ShoppingStoreClient {
 
     @GetMapping
-    Page<ProductDto> getProducts(ProductCategory category, @Valid Pageable pageable);
+    Page<ProductDto> getProducts(@RequestParam(name = "category") ProductCategory category, @Valid Pageable pageable);
 
     @PutMapping
     ProductDto addProduct(@RequestBody @Valid ProductDto productDto);

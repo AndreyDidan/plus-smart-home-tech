@@ -2,6 +2,9 @@ package ru.yandex.practicum.service;
 
 import ru.yandex.practicum.model.*;
 
+import java.util.Map;
+import java.util.UUID;
+
 public interface WarehouseService {
     void addNewProduct(NewProductInWarehouseRequest request);
 
@@ -10,4 +13,10 @@ public interface WarehouseService {
     void addProductQuantity(AddProductToWarehouseRequest request);
 
     AddressDto getAddress();
+
+    void shippedDelivery(ShippedToDeliveryRequest shippedToDeliveryRequest);
+
+    void productToWarehouse(Map<UUID,Long> products);
+
+    BookedProductsDto orderAssembly(AssemblyProductsForOrderRequest assemblyProductsForOrderRequest);
 }
